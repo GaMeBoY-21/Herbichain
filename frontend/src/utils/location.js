@@ -1,26 +1,30 @@
 // src/utils/location.js
 
-// Helper: reverse geocode using OpenStreetMap Nominatim
+// Helper: reverse geocode lat/lng → place name using OpenStreetMap
 async function reverseGeocode(lat, lng) {
   try {
-    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
-    const res = await fetch(url, {
-      headers: {
-        "Accept": "application/json",
-        // identify as demo app (Nominatim requirement)
-        "User-Agent": "AyurTrace-Demo/1.0 (contact: demo@example.com)",
-      },
-    });
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
+      {
+        headers: {
+          "Accept-Language": "en",
+        },
+      }
+    );
+
     if (!res.ok) {
-      throw new Error("Reverse geocode failed");
+      throw new Error("Reverse geocoding failed");
     }
+
     const data = await res.json();
-    // Try to build a nice location name
+    // Try nice names in order
     return (
       data.display_name ||
-      [data.address?.city, data.address?.state, data.address?.country]
-        .filter(Boolean)
-        .join(", ") ||
+      data.name ||
+      data.address?.city ||
+      data.address?.town ||
+      data.address?.village ||
+      data.address?.state ||
       "Unknown location"
     );
   } catch (err) {
@@ -29,18 +33,17 @@ async function reverseGeocode(lat, lng) {
   }
 }
 
-// Main function called from FarmerPage
+// Main function: get coords + human-readable name
 export async function getDeviceLocationWithName() {
-  return new Promise((resolve) => {
-    if (!("geolocation" in navigator)) {
-      console.warn("Geolocation not supported in this browser");
-      resolve({
-        coords: null,
-        locationName: "Location not available",
-      });
-      return;
-    }
+  if (!("geolocation" in navigator)) {
+    console.warn("Geolocation not supported in this browser.");
+    return {
+      coords: null,
+      locationName: "Geolocation not supported",
+    };
+  }
 
+  return new Promise((resolve) => {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const lat = pos.coords.latitude;
@@ -54,16 +57,15 @@ export async function getDeviceLocationWithName() {
         });
       },
       (err) => {
-        console.error("Geolocation error:", err);
+        console.error("Error getting device location:", err);
         resolve({
           coords: null,
-          locationName: "Location not allowed",
+          locationName: "Location permission denied",
         });
       },
       {
         enableHighAccuracy: true,
         timeout: 10000,
-        maximumAge: 10000,
       }
     );
   });

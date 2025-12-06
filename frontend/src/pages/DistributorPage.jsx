@@ -21,15 +21,44 @@ function DistributorPage({
   const [isCapturingLoc, setIsCapturingLoc] = useState(false);
   const [locPreview, setLocPreview] = useState("");
 
-  const handleShip = async (e) => {
-    e.preventDefault();
-    if (!selectedBatch) return;
-
+  const captureLocation = async () => {
     setIsCapturingLoc(true);
     const locationInfo = await getDeviceLocationWithName();
     setIsCapturingLoc(false);
 
+    const coordsText =
+      locationInfo.coords &&
+      `${locationInfo.coords.lat.toFixed(4)}, ${locationInfo.coords.lng.toFixed(
+        4
+      )}`;
+
+    setLocPreview(
+      locationInfo.locationName || coordsText || "Location not available"
+    );
+
+    return locationInfo;
+  };
+
+  const handlePreviewLocation = async () => {
+    await captureLocation();
+  };
+
+  const handleShip = async (e) => {
+    e.preventDefault();
+    if (!selectedBatch) return;
+
+    const locationInfo = await captureLocation();
     const now = new Date();
+
+    const locName =
+      locationInfo.locationName ||
+      selectedBatch.locationName ||
+      selectedBatch.location ||
+      (locationInfo.coords
+        ? `${locationInfo.coords.lat.toFixed(
+            4
+          )}, ${locationInfo.coords.lng.toFixed(4)}`
+        : "Unknown location");
 
     const newEvent = {
       type: "DISTRIBUTION",
@@ -37,15 +66,16 @@ function DistributorPage({
       actorName: distributorName,
       timestamp: now.toLocaleString("en-IN"),
       details: `Shipped to ${destination}`,
-      locationName: locationInfo.locationName,
-      geo: locationInfo.coords,
+      locationName: locName,
+      geo: locationInfo.coords || selectedBatch.geo || null,
     };
 
     const updated = {
       ...selectedBatch,
       status: "In Distribution",
-      location: locationInfo.locationName || selectedBatch.location,
-      geo: locationInfo.coords || selectedBatch.geo,
+      location: locName,
+      locationName: locName,
+      geo: locationInfo.coords || selectedBatch.geo || null,
       events: [...selectedBatch.events, newEvent],
     };
 
@@ -53,21 +83,8 @@ function DistributorPage({
     setLocPreview("");
   };
 
-  const handlePreviewLocation = async () => {
-    setIsCapturingLoc(true);
-    const locationInfo = await getDeviceLocationWithName();
-    setIsCapturingLoc(false);
-
-    const coordsText = locationInfo.coords
-      ? `${locationInfo.coords.lat.toFixed(4)}, ${locationInfo.coords.lng.toFixed(
-          4
-        )}`
-      : "";
-    setLocPreview(`${locationInfo.locationName} ${coordsText && `(${coordsText})`}`);
-  };
-
   return (
-    <div className="grid-2 main-grid">
+    <div className="main-grid">
       <div>
         <div className="card">
           <h3>Distributor – Ship Batch</h3>
@@ -109,7 +126,7 @@ function DistributorPage({
                 </div>
 
                 <button className="primary-btn" type="submit">
-                  Record Shipment (with location)
+                  Record Shipment
                 </button>
               </form>
             </>

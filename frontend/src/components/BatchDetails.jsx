@@ -12,12 +12,11 @@ function BatchDetails({ batch, onShowQR }) {
     );
   }
 
-  const formatCoords = (geo) => {
-    if (!geo) return "";
-    const lat = Number(geo.lat).toFixed(4);
-    const lng = Number(geo.lng).toFixed(4);
-    return `${lat}, ${lng}`;
-  };
+  const locName = batch.locationName || batch.location || "Unknown location";
+  const coordsText =
+    batch.geo && batch.geo.lat && batch.geo.lng
+      ? `${batch.geo.lat.toFixed(4)}, ${batch.geo.lng.toFixed(4)}`
+      : null;
 
   return (
     <div className="card">
@@ -34,24 +33,25 @@ function BatchDetails({ batch, onShowQR }) {
             <strong>Herb:</strong> {batch.herbName}
           </p>
           <p>
-            <strong>Species:</strong> {batch.species}
+            <strong>Species:</strong> {batch.species || "—"}
           </p>
           <p>
-            <strong>Farmer:</strong> {batch.farmerName}
+            <strong>Farmer:</strong> {batch.farmerName || "—"}
           </p>
           <p>
-            <strong>Location:</strong> {batch.location || batch.locationName}
+            <strong>Location:</strong> {locName}
+            {coordsText && (
+              <>
+                {" "}
+                <span className="muted small">({coordsText})</span>
+              </>
+            )}
           </p>
         </div>
         <div>
           <p>
             <strong>Status:</strong> {batch.status}
           </p>
-          {batch.geo && (
-            <p>
-              <strong>Geo-tag:</strong> {formatCoords(batch.geo)}
-            </p>
-          )}
           <p>
             <strong>QR Value:</strong> {batch.qrCodeValue}
           </p>

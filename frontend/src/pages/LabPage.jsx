@@ -5,7 +5,12 @@ import BatchDetails from "../components/BatchDetails.jsx";
 import QRModal from "../components/QRModal.jsx";
 import { getDeviceLocationWithName } from "../utils/location.js";
 
-function LabPage({ batches, selectedBatch, setSelectedBatchId, updateBatch }) {
+function LabPage({
+  batches,
+  selectedBatch,
+  setSelectedBatchId,
+  updateBatch,
+}) {
   const [labName, setLabName] = useState("AyurLab Pune");
   const [reportHash, setReportHash] = useState("QmXYZ999");
   const [comments, setComments] = useState(
@@ -15,15 +20,44 @@ function LabPage({ batches, selectedBatch, setSelectedBatchId, updateBatch }) {
   const [isCapturingLoc, setIsCapturingLoc] = useState(false);
   const [locPreview, setLocPreview] = useState("");
 
-  const handleAddTest = async (e) => {
-    e.preventDefault();
-    if (!selectedBatch) return;
-
+  const captureLocation = async () => {
     setIsCapturingLoc(true);
     const locationInfo = await getDeviceLocationWithName();
     setIsCapturingLoc(false);
 
+    const coordsText =
+      locationInfo.coords &&
+      `${locationInfo.coords.lat.toFixed(4)}, ${locationInfo.coords.lng.toFixed(
+        4
+      )}`;
+
+    setLocPreview(
+      locationInfo.locationName || coordsText || "Location not available"
+    );
+
+    return locationInfo;
+  };
+
+  const handlePreviewLocation = async () => {
+    await captureLocation();
+  };
+
+  const handleAddTest = async (e) => {
+    e.preventDefault();
+    if (!selectedBatch) return;
+
+    const locationInfo = await captureLocation();
     const now = new Date();
+
+    const locName =
+      locationInfo.locationName ||
+      selectedBatch.locationName ||
+      selectedBatch.location ||
+      (locationInfo.coords
+        ? `${locationInfo.coords.lat.toFixed(
+            4
+          )}, ${locationInfo.coords.lng.toFixed(4)}`
+        : "Unknown location");
 
     const newEvent = {
       type: "LAB_TEST",
@@ -32,15 +66,16 @@ function LabPage({ batches, selectedBatch, setSelectedBatchId, updateBatch }) {
       timestamp: now.toLocaleString("en-IN"),
       details: comments,
       labReportIpfsHash: reportHash,
-      locationName: locationInfo.locationName,
-      geo: locationInfo.coords,
+      locationName: locName,
+      geo: locationInfo.coords || selectedBatch.geo || null,
     };
 
     const updated = {
       ...selectedBatch,
       status: "Lab Tested",
-      location: locationInfo.locationName || selectedBatch.location,
-      geo: locationInfo.coords || selectedBatch.geo,
+      location: locName,
+      locationName: locName,
+      geo: locationInfo.coords || selectedBatch.geo || null,
       events: [...selectedBatch.events, newEvent],
     };
 
@@ -48,21 +83,8 @@ function LabPage({ batches, selectedBatch, setSelectedBatchId, updateBatch }) {
     setLocPreview("");
   };
 
-  const handlePreviewLocation = async () => {
-    setIsCapturingLoc(true);
-    const locationInfo = await getDeviceLocationWithName();
-    setIsCapturingLoc(false);
-
-    const coordsText = locationInfo.coords
-      ? `${locationInfo.coords.lat.toFixed(4)}, ${locationInfo.coords.lng.toFixed(
-          4
-        )}`
-      : "";
-    setLocPreview(`${locationInfo.locationName} ${coordsText && `(${coordsText})`}`);
-  };
-
   return (
-    <div className="grid-2 main-grid">
+    <div className="main-grid">
       <div>
         <div className="card">
           <h3>Lab – Add Test Result</h3>

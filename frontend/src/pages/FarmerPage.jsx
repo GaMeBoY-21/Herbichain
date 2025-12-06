@@ -5,7 +5,12 @@ import BatchDetails from "../components/BatchDetails.jsx";
 import QRModal from "../components/QRModal.jsx";
 import { getDeviceLocationWithName } from "../utils/location.js";
 
-function FarmerPage({ batches, selectedBatch, setSelectedBatchId, createBatch }) {
+function FarmerPage({
+  batches,
+  selectedBatch,
+  setSelectedBatchId,
+  createBatch,
+}) {
   const [form, setForm] = useState({
     herbName: "",
     species: "",
@@ -19,24 +24,54 @@ function FarmerPage({ batches, selectedBatch, setSelectedBatchId, createBatch })
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   };
 
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    if (!form.herbName || !form.farmerName) return;
-
+  const captureLocation = async () => {
     setIsCapturingLoc(true);
     const locationInfo = await getDeviceLocationWithName();
     setIsCapturingLoc(false);
 
-    const id = "BATCH-" + String(Date.now()).slice(-5);
+    const coordsText =
+      locationInfo.coords &&
+      `${locationInfo.coords.lat.toFixed(4)}, ${locationInfo.coords.lng.toFixed(
+        4
+      )}`;
+
+    setLocPreview(
+      locationInfo.locationName || coordsText || "Location not available"
+    );
+
+    return locationInfo;
+  };
+
+  const handlePreviewLocation = async () => {
+    await captureLocation();
+  };
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    if (!form.herbName || !form.farmerName) return;
+
+    const locationInfo = await captureLocation();
     const now = new Date();
+
+    const id = "BATCH-" + String(Date.now()).slice(-6);
+
+    const locName =
+      locationInfo.locationName ||
+      (locationInfo.coords
+        ? `${locationInfo.coords.lat.toFixed(
+            4
+          )}, ${locationInfo.coords.lng.toFixed(4)}`
+        : "Unknown location");
 
     const newBatch = {
       id,
       herbName: form.herbName,
       species: form.species,
       farmerName: form.farmerName,
-      location: locationInfo.locationName,
-      geo: locationInfo.coords,
+      // 🔑 top-level location fields used by BatchDetails
+      location: locName,
+      locationName: locName,
+      geo: locationInfo.coords, // { lat, lng } or null
       status: "Harvested",
       qrCodeValue: id,
       events: [
@@ -46,7 +81,7 @@ function FarmerPage({ batches, selectedBatch, setSelectedBatchId, createBatch })
           actorName: form.farmerName,
           timestamp: now.toLocaleString("en-IN"),
           details: `Harvested ${form.herbName}.`,
-          locationName: locationInfo.locationName,
+          locationName: locName,
           geo: locationInfo.coords,
         },
       ],
@@ -61,21 +96,8 @@ function FarmerPage({ batches, selectedBatch, setSelectedBatchId, createBatch })
     setLocPreview("");
   };
 
-  const handlePreviewLocation = async () => {
-    setIsCapturingLoc(true);
-    const locationInfo = await getDeviceLocationWithName();
-    setIsCapturingLoc(false);
-
-    const coordsText = locationInfo.coords
-      ? `${locationInfo.coords.lat.toFixed(4)}, ${locationInfo.coords.lng.toFixed(
-          4
-        )}`
-      : "";
-    setLocPreview(`${locationInfo.locationName} ${coordsText && `(${coordsText})`}`);
-  };
-
   return (
-    <div className="grid-2 main-grid">
+    <div className="main-grid">
       <div>
         <div className="card">
           <h3>Farmer – Create New Batch</h3>
@@ -87,6 +109,7 @@ function FarmerPage({ batches, selectedBatch, setSelectedBatchId, createBatch })
                 value={form.herbName}
                 onChange={handleChange}
                 placeholder="Ashwagandha roots"
+                required
               />
             </label>
             <label>
@@ -105,6 +128,7 @@ function FarmerPage({ batches, selectedBatch, setSelectedBatchId, createBatch })
                 value={form.farmerName}
                 onChange={handleChange}
                 placeholder="Ramesh Kumar"
+                required
               />
             </label>
 
@@ -118,7 +142,8 @@ function FarmerPage({ batches, selectedBatch, setSelectedBatchId, createBatch })
               </button>
               {locPreview && (
                 <p className="muted small">
-                  Captured: <span className="location-preview">{locPreview}</span>
+                  Captured:{" "}
+                  <span className="location-preview">{locPreview}</span>
                 </p>
               )}
             </div>
