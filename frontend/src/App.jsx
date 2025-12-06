@@ -1,7 +1,8 @@
 // src/App.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+
 import TopNav from "./components/TopNav.jsx";
-// import RoleTabs from "./components/RoleTabs.jsx"; // NOT needed now
+import RoleTabs from "./components/RoleTabs.jsx";
 
 import FarmerPage from "./pages/FarmerPage.jsx";
 import LabPage from "./pages/LabPage.jsx";
@@ -13,79 +14,140 @@ import ConsumerPage from "./pages/ConsumerPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
 
-import { batchesMock } from "./data/mockData.js";
 import { useAuth } from "./AuthContext.jsx";
+import { batchesMock } from "./data/mockData.js";
+
+const API_BASE = "http://localhost:4000";
 
 function App() {
   const { currentUser, role } = useAuth();
+  const [authView, setAuthView] = useState("login");
 
-  const [batches, setBatches] = useState(batchesMock);
-  const [selectedBatchId, setSelectedBatchId] = useState(
-    batchesMock[0]?.id || null
-  );
+  const [activeRole, setActiveRole] = useState(null);
 
-  const [showSignup, setShowSignup] = useState(false);
+  const [batches, setBatches] = useState([]);
+  const [selectedBatchId, setSelectedBatchId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState("");
 
-  const selectedBatch = batches.find((b) => b.id === selectedBatchId) || null;
+  useEffect(() => {
+    if (role) setActiveRole(role);
+  }, [role]);
 
-  const updateBatch = (updatedBatch) => {
-    setBatches((prev) =>
-      prev.map((b) => (b.id === updatedBatch.id ? updatedBatch : b))
-    );
-  };
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/batches`);
+        if (!res.ok) throw new Error("Backend error");
 
-  const createBatch = (newBatch) => {
-    setBatches((prev) => [...prev, newBatch]);
-    setSelectedBatchId(newBatch.id);
-  };
-
-  const renderRolePage = () => {
-    const commonProps = {
-      batches,
-      selectedBatch,
-      setSelectedBatchId,
-      updateBatch,
-      createBatch,
+        const data = await res.json();
+        if (!data.length) {
+          setBatches(batchesMock);
+          setSelectedBatchId(batchesMock[0].id);
+        } else {
+          setBatches(data);
+          setSelectedBatchId(data[0].id);
+        }
+      } catch (err) {
+        setBatches(batchesMock);
+        setSelectedBatchId(batchesMock[0].id);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    switch (role) {
-      case "farmer":
-        return <FarmerPage {...commonProps} />;
-      case "lab":
-        return <LabPage {...commonProps} />;
-      case "manufacturer":
-        return <ManufacturerPage {...commonProps} />;
-      case "distributor":
-        return <DistributorPage {...commonProps} />;
-      case "regulator":
-        return <RegulatorPage {...commonProps} />;
-      case "consumer":
-        // consumer only needs batches
-        return <ConsumerPage batches={batches} />;
-      default:
-        return (
-          <div style={{ padding: 16 }}>
-            <p>No role assigned to this user.</p>
-          </div>
-        );
+    load();
+  }, []);
+
+  const selectedBatch = batches.find((b) => b.id === selectedBatchId);
+
+  const createBatch = async (batch) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/batches`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(batch),
+      });
+      const saved = await res.json();
+      setBatches((prev) => [...prev, saved]);
+      setSelectedBatchId(saved.id);
+    } catch {
+      setBatches((prev) => [...prev, batch]);
+      setSelectedBatchId(batch.id);
     }
   };
 
-  // If user is not logged in -> show auth screens
+  const updateBatch = async (updated) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/batches/${updated.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated),
+      });
+
+      const saved = await res.json();
+      setBatches((prev) =>
+        prev.map((b) => (b.id === saved.id ? saved : b))
+      );
+    } catch {
+      setBatches((prev) =>
+        prev.map((b) => (b.id === updated.id ? updated : b))
+      );
+    }
+  };
+
+  const renderPage = () => {
+    const props = {
+      batches,
+      selectedBatch,
+      setSelectedBatchId,
+      createBatch,
+      updateBatch,
+    };
+
+    switch (activeRole) {
+      case "farmer":
+        return <FarmerPage {...props} />;
+      case "lab":
+        return <LabPage {...props} />;
+      case "manufacturer":
+        return <ManufacturerPage {...props} />;
+      case "distributor":
+        return <DistributorPage {...props} />;
+      case "regulator":
+        return <RegulatorPage {...props} />;
+      case "consumer":
+        return <ConsumerPage {...props} />;
+      default:
+        return null;
+    }
+  };
+
   if (!currentUser) {
-    return showSignup ? (
-      <SignupPage onSwitchToLogin={() => setShowSignup(false)} />
+    return authView === "login" ? (
+      <LoginPage onSwitchToSignup={() => setAuthView("signup")} />
     ) : (
-      <LoginPage onSwitchToSignup={() => setShowSignup(true)} />
+      <SignupPage onSwitchToLogin={() => setAuthView("login")} />
     );
   }
 
-  // Logged in view
   return (
     <div className="app">
-      <TopNav />
-      {/* RoleTabs removed so user can't switch roles */}
-      <main className="main-content">{renderRolePage()}</main>
+      <TopNav role={role} />
+
+      <RoleTabs
+        activeRole={activeRole}
+        setActiveRole={setActiveRole}
+        userRole={role}
+      />
+
+      {apiError && <p className="error-banner">{apiError}</p>}
+
+      {loading ? (
+        <p className="muted">Loading...</p>
+      ) : (
+        <main className="main-content">{renderPage()}</main>
+      )}
     </div>
   );
 }

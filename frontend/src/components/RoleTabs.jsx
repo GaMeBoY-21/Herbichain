@@ -1,7 +1,7 @@
 // src/components/RoleTabs.jsx
 import React from "react";
 
-const roles = [
+const allRoles = [
   { id: "farmer", label: "Farmer" },
   { id: "lab", label: "Lab" },
   { id: "manufacturer", label: "Manufacturer" },
@@ -10,18 +10,20 @@ const roles = [
   { id: "consumer", label: "Consumer" },
 ];
 
-function RoleTabs({ activeRole, setActiveRole }) {
+function RoleTabs({ activeRole, setActiveRole, userRole }) {
+  const rolesToShow = allRoles.filter((r) => r.id === userRole);
+
   return (
     <nav className="role-tabs">
-      {roles.map((role) => (
+      {rolesToShow.map((r) => (
         <button
-          key={role.id}
+          key={r.id}
           className={
-            "role-tab-btn" + (activeRole === role.id ? " active" : "")
+            "role-tab-btn" + (activeRole === r.id ? " active" : "")
           }
-          onClick={() => setActiveRole(role.id)}
+          onClick={() => setActiveRole(r.id)}
         >
-          {role.label}
+          {r.label}
         </button>
       ))}
     </nav>

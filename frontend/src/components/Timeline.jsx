@@ -6,13 +6,6 @@ function Timeline({ events }) {
     return <p>No events recorded yet.</p>;
   }
 
-  const formatCoords = (geo) => {
-    if (!geo) return "";
-    const lat = Number(geo.lat).toFixed(4);
-    const lng = Number(geo.lng).toFixed(4);
-    return `${lat}, ${lng}`;
-  };
-
   return (
     <ul className="timeline">
       {events.map((ev, idx) => (
@@ -27,21 +20,16 @@ function Timeline({ events }) {
             <small>
               By: {ev.actorName} ({ev.by})
             </small>
-            {ev.locationName && (
-              <div className="timeline-location">
-                Location: {ev.locationName}
-                {ev.geo && (
-                  <>
-                    {" "}
-                    (
-                    <span className="timeline-coords">
-                      {formatCoords(ev.geo)}
-                    </span>
-                    )
-                  </>
-                )}
-              </div>
+
+            {(ev.locationName || ev.geo) && (
+              <p className="timeline-location">
+                <strong>Location:</strong>{" "}
+                {ev.locationName || "Unknown"}
+                {ev.geo &&
+                  ` (${ev.geo.lat?.toFixed(4)}, ${ev.geo.lng?.toFixed(4)})`}
+              </p>
             )}
+
             {ev.labReportIpfsHash && (
               <div className="ipfs-hash">
                 Lab Report IPFS Hash: {ev.labReportIpfsHash}

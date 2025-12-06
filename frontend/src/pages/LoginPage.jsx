@@ -4,83 +4,62 @@ import { useAuth } from "../AuthContext.jsx";
 
 function LoginPage({ onSwitchToSignup }) {
   const { login, resetPassword } = useAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
-  const [error, setError] = useState("");
 
-  const handleLogin = async (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    setError("");
     setMsg("");
+
     try {
       await login(email, password);
     } catch (err) {
-      console.error(err);
-      setError("Failed to log in. Check your email or password.");
+      setMsg("Invalid credentials.");
     }
   };
 
   const handleReset = async () => {
     if (!email) {
-      setError("Enter your email above to reset password.");
+      setMsg("Enter your email first.");
       return;
     }
-    setError("");
-    try {
-      await resetPassword(email);
-      setMsg("Password reset email sent.");
-    } catch (err) {
-      console.error(err);
-      setError("Failed to send reset email.");
-    }
+    await resetPassword(email);
+    setMsg("Reset link sent to your email.");
   };
 
   return (
     <div className="auth-wrapper">
       <div className="auth-card">
-        <h2>AyurTrace Login</h2>
-        <p className="auth-subtitle">Sign in to access your role dashboard.</p>
+        <h2>Login</h2>
 
-        <form className="form" onSubmit={handleLogin}>
-          <label>
-            Email
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </label>
+        <form className="form" onSubmit={submit}>
+          <label>Email</label>
+          <input value={email} onChange={(e) => setEmail(e.target.value)} />
 
-          <label>
-            Password
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </label>
+          <label>Password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
-          {error && <p className="auth-error">{error}</p>}
-          {msg && <p className="auth-success">{msg}</p>}
+          {msg && <p className="auth-info">{msg}</p>}
 
-          <button type="submit" className="primary-btn">
-            Log In
-          </button>
+          <button className="primary-btn">Login</button>
         </form>
 
-        <button className="link-btn" onClick={handleReset}>
-          Forgot password? Send reset email
+        <button onClick={handleReset} className="link-btn">
+          Forgot password?
         </button>
 
-        <div className="auth-footer">
+        <p>
           New user?{" "}
           <button className="link-btn" onClick={onSwitchToSignup}>
-            Create an account
+            Create account
           </button>
-        </div>
+        </p>
       </div>
     </div>
   );

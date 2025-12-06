@@ -1,4 +1,7 @@
-/* ===== Global reset ===== */
+/* -------------------------------------------------------------
+   GLOBAL RESET + THEME
+-------------------------------------------------------------- */
+
 * {
   box-sizing: border-box;
 }
@@ -6,414 +9,68 @@
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-  background: #f4f5f7;
-  color: #111827;
+    Roboto, sans-serif;
+  background: #0f172a; /* dark navy */
+  color: #e5e7eb; /* gray-200 */
 }
 
-/* ===== App layout ===== */
 .app {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 24px 16px 40px;
+  padding: 16px 16px 40px;
 }
 
-.main-content {
-  margin-top: 16px;
-}
+/* -------------------------------------------------------------
+   AUTH PAGES (Login + Signup)
+-------------------------------------------------------------- */
 
-/* ===== Top navigation ===== */
-.topnav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 14px;
-  border-radius: 8px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-}
-
-.topnav-left h1 {
-  margin: 0;
-  font-size: 20px;
-}
-
-.topnav-subtitle {
-  display: block;
-  font-size: 12px;
-  color: #6b7280;
-  margin-top: 2px;
-}
-
-.topnav-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.topnav-user {
-  font-size: 13px;
-  color: #374151;
-}
-
-/* ===== Buttons ===== */
-.primary-btn,
-.secondary-btn {
-  border-radius: 999px;
-  padding: 8px 16px;
-  font-size: 13px;
-  cursor: pointer;
-  border: none;
-}
-
-.primary-btn {
-  background: #2563eb;
-  color: white;
-  border: 1px solid #2563eb;
-}
-
-.primary-btn:hover {
-  background: #1d4ed8;
-}
-
-.secondary-btn {
-  background: #ffffff;
-  color: #374151;
-  border: 1px solid #d1d5db;
-}
-
-.secondary-btn:hover {
-  background: #f3f4f6;
-}
-
-/* ===== Cards & grid ===== */
-.card {
-  background: #ffffff;
-  border-radius: 8px;
-  padding: 16px 18px;
-  border: 1px solid #e5e7eb;
-}
-
-.card h3 {
-  margin-top: 0;
-  margin-bottom: 8px;
-}
-
-.card-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.main-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr);
-  gap: 16px;
-}
-
-.grid-2 {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
-  margin: 10px 0 6px;
-}
-
-@media (max-width: 900px) {
-  .main-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .topnav {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-}
-
-/* ===== Forms ===== */
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.form label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 13px;
-  color: #374151;
-}
-
-.form input,
-.form textarea,
-.form select {
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  padding: 6px 8px;
-  background: #ffffff;
-  color: #111827;
-  font-size: 13px;
-}
-
-.form textarea {
-  min-height: 60px;
-  resize: vertical;
-}
-
-/* ===== Batch list ===== */
-.batch-list {
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
-  max-height: 260px;
-  overflow-y: auto;
-}
-
-.batch-list-item {
-  border-radius: 6px;
-  padding: 8px 10px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  margin-bottom: 6px;
-  cursor: pointer;
-}
-
-.batch-list-item:hover {
-  background: #f3f4f6;
-}
-
-.batch-list-item.selected {
-  border-color: #2563eb;
-  background: #eff6ff;
-}
-
-.batch-id {
-  font-weight: 600;
-  font-size: 13px;
-}
-
-.batch-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  margin-top: 2px;
-}
-
-.status-pill {
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid #d1d5db;
-  font-size: 11px;
-  color: #374151;
-}
-
-.status-pill.warning {
-  border-color: #f59e0b;
-  color: #b45309;
-}
-
-/* ===== Timeline ===== */
-.timeline {
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
-  border-left: 1px solid #e5e7eb;
-}
-
-.timeline-item {
-  position: relative;
-  padding-left: 14px;
-  margin-bottom: 10px;
-}
-
-.timeline-marker {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: #2563eb;
-  position: absolute;
-  left: -5px;
-  top: 3px;
-}
-
-.timeline-content {
-  font-size: 13px;
-}
-
-.timeline-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  margin-bottom: 2px;
-}
-
-.timeline-time {
-  color: #6b7280;
-}
-
-.ipfs-hash {
-  font-size: 11px;
-  margin-top: 2px;
-  color: #4b5563;
-}
-
-/* ===== Modal / QR ===== */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 40;
-}
-
-.modal {
-  background: #ffffff;
-  border-radius: 10px;
-  padding: 16px 18px;
-  border: 1px solid #e5e7eb;
-  max-width: 360px;
-  width: 90%;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.icon-btn {
-  border: none;
-  background: transparent;
-  color: #6b7280;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-.fake-qr {
-  margin-top: 16px;
-  border-radius: 10px;
-  border: 2px dashed #9ca3af;
-  height: 160px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  letter-spacing: 3px;
-  font-weight: 600;
-}
-
-/* ===== Login page ===== */
-.login-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-top: 40px;
-}
-
-.login-card {
-  max-width: 420px;
-  width: 100%;
-}
-
-.login-card h2 {
-  margin-top: 0;
-  margin-bottom: 6px;
-}
-
-/* ===== Misc ===== */
-.muted {
-  font-size: 13px;
-  color: #6b7280;
-}
-.location-helper {
-  margin-top: 6px;
-}
-
-.secondary-btn {
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  background: transparent;
-  color: #e5e7eb;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.secondary-btn:hover {
-  background: rgba(15, 23, 42, 0.8);
-}
-
-.small {
-  font-size: 12px;
-}
-
-.location-preview {
-  font-weight: 500;
-}
-
-.timeline-location {
-  font-size: 11px;
-  margin-top: 2px;
-  color: #9ca3af;
-}
-
-.timeline-coords {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
-}
-/* Auth layout – simple and clean */
 .auth-wrapper {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0f172a;
-  padding: 16px;
+  padding: 20px;
 }
 
 .auth-card {
-  background: #020617;
-  border-radius: 18px;
-  padding: 20px 22px;
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  max-width: 360px;
   width: 100%;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.9);
+  max-width: 380px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.5);
 }
 
 .auth-card h2 {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
+  font-size: 22px;
+  text-align: center;
 }
 
 .auth-subtitle {
-  margin: 0 0 14px;
-  font-size: 13px;
+  text-align: center;
+  font-size: 14px;
+  margin-bottom: 16px;
   color: #9ca3af;
 }
 
 .auth-error {
-  color: #fca5a5;
-  font-size: 13px;
+  color: #f87171;
+  font-size: 14px;
+  text-align: center;
 }
 
-.auth-success {
-  color: #bbf7d0;
-  font-size: 13px;
-}
-
-.auth-footer {
-  margin-top: 10px;
-  font-size: 13px;
+.auth-info {
+  color: #38bdf8;
+  font-size: 14px;
+  text-align: center;
 }
 
 .link-btn {
   background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
   color: #60a5fa;
+  border: none;
   cursor: pointer;
   font-size: 13px;
 }
@@ -422,29 +79,290 @@ body {
   text-decoration: underline;
 }
 
+/* -------------------------------------------------------------
+   NAVIGATION (Top Bar)
+-------------------------------------------------------------- */
+
+.topnav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  backdrop-filter: blur(14px);
+}
+
+.topnav h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.topnav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logout-btn,
 .secondary-btn {
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.4);
   background: transparent;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
   color: #e5e7eb;
-  font-size: 12px;
   cursor: pointer;
 }
 
+.logout-btn:hover,
 .secondary-btn:hover {
-  background: rgba(15, 23, 42, 0.9);
+  background: rgba(255, 255, 255, 0.06);
 }
 
-.user-info {
+/* -------------------------------------------------------------
+   ROLE TABS
+-------------------------------------------------------------- */
+
+.role-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0 20px;
+  flex-wrap: wrap;
+}
+
+.role-tab-btn {
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.15);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  color: #e5e7eb;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.role-tab-btn.active {
+  background: linear-gradient(135deg, #22c55e, #3b82f6);
+  border-color: transparent;
+  color: #020617;
+}
+
+.role-tab-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* -------------------------------------------------------------
+   LAYOUT GRID
+-------------------------------------------------------------- */
+
+.main-content {
+  margin-top: 4px;
+}
+
+.main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.3fr);
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .topnav {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+
+/* -------------------------------------------------------------
+   CARD STYLE
+-------------------------------------------------------------- */
+
+.card {
+  background: rgba(15, 23, 42, 0.95);
+  border-radius: 18px;
+  padding: 18px 20px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.4);
+}
+
+.card h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.card-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* -------------------------------------------------------------
+   FORMS
+-------------------------------------------------------------- */
+
+.form {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  margin-right: 8px;
+  gap: 12px;
 }
 
-.user-email {
+.form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.form input,
+.form textarea,
+.form select {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  background: rgba(15, 23, 42, 0.8);
+  color: #e5e7eb;
+  font-size: 14px;
+}
+
+.primary-btn {
+  margin-top: 6px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #22c55e, #3b82f6);
+  border: none;
+  color: #020617;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary-btn:hover {
+  opacity: 0.93;
+}
+
+/* -------------------------------------------------------------
+   BATCH LIST
+-------------------------------------------------------------- */
+
+.batch-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.batch-list-item {
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.batch-list-item:hover {
+  border-color: rgba(148, 163, 184, 0.7);
+}
+
+.batch-list-item.selected {
+  border-color: #22c55e;
+}
+
+.status-pill {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
   font-size: 11px;
+}
+
+.status-pill.warning {
+  border-color: #facc15;
+  color: #facc15;
+}
+
+/* -------------------------------------------------------------
+   TIMELINE
+-------------------------------------------------------------- */
+
+.timeline {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  border-left: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+.timeline-item {
+  position: relative;
+  padding-left: 16px;
+  margin-bottom: 14px;
+}
+
+.timeline-marker {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #22c55e;
+  position: absolute;
+  left: -6px;
+  top: 4px;
+}
+
+.timeline-content {
+  font-size: 14px;
+}
+
+/* -------------------------------------------------------------
+   MODALS (QR)
+-------------------------------------------------------------- */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(3px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 40;
+}
+
+.modal {
+  background: #020617;
+  border-radius: 20px;
+  padding: 20px;
+  width: 90%;
+  max-width: 380px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+}
+
+.fake-qr {
+  margin-top: 18px;
+  height: 180px;
+  border: 2px dashed rgba(148, 163, 184, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 4px;
+}
+
+/* -------------------------------------------------------------
+   MISC
+-------------------------------------------------------------- */
+
+.muted {
   color: #9ca3af;
 }
 
+.small {
+  font-size: 13px;
+}

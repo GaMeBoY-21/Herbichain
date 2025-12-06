@@ -1,78 +1,70 @@
 // src/utils/location.js
 
-// Get browser coordinates as a Promise
-function getBrowserCoords() {
-  return new Promise((resolve, reject) => {
+// Helper: reverse geocode using OpenStreetMap Nominatim
+async function reverseGeocode(lat, lng) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
+    const res = await fetch(url, {
+      headers: {
+        "Accept": "application/json",
+        // identify as demo app (Nominatim requirement)
+        "User-Agent": "AyurTrace-Demo/1.0 (contact: demo@example.com)",
+      },
+    });
+    if (!res.ok) {
+      throw new Error("Reverse geocode failed");
+    }
+    const data = await res.json();
+    // Try to build a nice location name
+    return (
+      data.display_name ||
+      [data.address?.city, data.address?.state, data.address?.country]
+        .filter(Boolean)
+        .join(", ") ||
+      "Unknown location"
+    );
+  } catch (err) {
+    console.error("Reverse geocode error:", err);
+    return "Unknown location";
+  }
+}
+
+// Main function called from FarmerPage
+export async function getDeviceLocationWithName() {
+  return new Promise((resolve) => {
     if (!("geolocation" in navigator)) {
-      reject(new Error("Geolocation not supported in this browser"));
+      console.warn("Geolocation not supported in this browser");
+      resolve({
+        coords: null,
+        locationName: "Location not available",
+      });
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+
+        const locationName = await reverseGeocode(lat, lng);
+
         resolve({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
+          coords: { lat, lng },
+          locationName,
         });
       },
       (err) => {
-        reject(err);
+        console.error("Geolocation error:", err);
+        resolve({
+          coords: null,
+          locationName: "Location not allowed",
+        });
       },
       {
         enableHighAccuracy: true,
-        timeout: 15000,
+        timeout: 10000,
+        maximumAge: 10000,
       }
     );
   });
-}
-
-// Reverse geocode using OpenStreetMap Nominatim (demo only)
-async function reverseGeocode({ lat, lng }) {
-  const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
-
-  const res = await fetch(url, {
-    headers: {
-      // Good practice: identify your app for the public API
-      "User-Agent": "AyurTrace-Demo/1.0 (buildathon@example.com)",
-    },
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to reverse geocode");
-  }
-
-  const data = await res.json();
-  return data.display_name || "";
-}
-
-/**
- * Main helper to use in pages.
- * Returns { coords: {lat,lng}, locationName }
- */
-export async function getDeviceLocationWithName() {
-  try {
-    const coords = await getBrowserCoords();
-    let locationName = "";
-
-    try {
-      locationName = await reverseGeocode(coords);
-    } catch (e) {
-      console.warn("Reverse geocode failed:", e);
-    }
-
-    if (!locationName) {
-      locationName = `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`;
-    }
-
-    return {
-      coords,
-      locationName,
-    };
-  } catch (e) {
-    console.warn("Could not get device location:", e);
-    return {
-      coords: null,
-      locationName: "Unknown location",
-    };
-  }
 }

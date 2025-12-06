@@ -7,7 +7,10 @@ import {
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
   signOut,
+  setPersistence,
+  browserLocalPersistence,
 } from "firebase/auth";
+
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 const AuthContext = createContext(null);
@@ -21,58 +24,55 @@ export function AuthProvider({ children }) {
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Signup with email/password and role
-  const signup = async (email, password, role) => {
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    const user = cred.user;
+  // Ensure login stays across refresh (default Firebase behavior)
+  useEffect(() => {
+    setPersistence(auth, browserLocalPersistence);
+  }, []);
 
-    // Save role in Firestore
+  // Signup with role
+  const signup = async (email, password, userRole) => {
+    const userCred = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCred.user;
+
     await setDoc(doc(db, "users", user.uid), {
       email,
-      role,
+      role: userRole,
       createdAt: serverTimestamp(),
     });
 
     setCurrentUser(user);
-    setRole(role);
+    setRole(userRole);
   };
 
   // Login
   const login = async (email, password) => {
     const cred = await signInWithEmailAndPassword(auth, email, password);
-    const user = cred.user;
 
-    // Fetch role from Firestore
-    const snap = await getDoc(doc(db, "users", user.uid));
+    const snap = await getDoc(doc(db, "users", cred.user.uid));
     if (snap.exists()) {
-      setRole(snap.data().role || null);
-    } else {
-      setRole(null);
+      setRole(snap.data().role);
     }
 
-    setCurrentUser(user);
+    setCurrentUser(cred.user);
   };
 
   const resetPassword = (email) => sendPasswordResetEmail(auth, email);
-
   const logout = () => signOut(auth);
 
-  // Listen to auth state changes
+  // Listen for authentication changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user || null);
-
-      if (user) {
-        const snap = await getDoc(doc(db, "users", user.uid));
-        if (snap.exists()) {
-          setRole(snap.data().role || null);
-        } else {
-          setRole(null);
-        }
-      } else {
+      if (!user) {
+        setCurrentUser(null);
         setRole(null);
+        setLoading(false);
+        return;
       }
 
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (snap.exists()) setRole(snap.data().role);
+
+      setCurrentUser(user);
       setLoading(false);
     });
 
@@ -90,7 +90,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading ? children : <div style={{ padding: 20 }}>Loading...</div>}
+      {!loading ? children : <div className="muted">Loading...</div>}
     </AuthContext.Provider>
   );
 }
