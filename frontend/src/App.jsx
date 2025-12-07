@@ -15,12 +15,15 @@ import LoginPage from "./pages/LoginPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
 
 import { useAuth } from "./AuthContext.jsx";
+import { batchesMock } from "./data/mockData.js";
 
-const API_BASE = "http://localhost:4000";
+// ⬇️ IMPORTANT: use env var, fallback to localhost for dev
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
 
 function App() {
   const { currentUser, role } = useAuth();
-  const [authView, setAuthView] = useState("login"); // "login" | "signup"
+  const [authView, setAuthView] = useState("login");
 
   const [activeRole, setActiveRole] = useState(null);
 
@@ -29,14 +32,12 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
 
-  // When Firebase role changes, lock activeRole to that
   useEffect(() => {
     if (role) {
       setActiveRole(role);
     }
   }, [role]);
 
-  // Load batches from backend ONCE on app load
   useEffect(() => {
     const loadBatches = async () => {
       try {
@@ -44,23 +45,21 @@ function App() {
         setApiError("");
 
         const res = await fetch(`${API_BASE}/api/batches`);
-        if (!res.ok) {
-          throw new Error(`Backend responded with ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`Backend responded with ${res.status}`);
 
         const data = await res.json();
-
-        if (!Array.isArray(data)) {
-          throw new Error("Backend returned non-array data");
+        if (!Array.isArray(data) || data.length === 0) {
+          setBatches(batchesMock);
+          setSelectedBatchId(batchesMock[0]?.id || null);
+        } else {
+          setBatches(data);
+          setSelectedBatchId(data[0]?.id || null);
         }
-
-        setBatches(data);
-        setSelectedBatchId(data[0]?.id || null);
       } catch (err) {
         console.error("Error loading batches:", err);
-        setApiError("Could not load batches from backend.");
-        setBatches([]);
-        setSelectedBatchId(null);
+        setApiError("Could not connect to backend. Using demo data.");
+        setBatches(batchesMock);
+        setSelectedBatchId(batchesMock[0]?.id || null);
       } finally {
         setLoading(false);
       }
@@ -72,7 +71,6 @@ function App() {
   const selectedBatch =
     batches.find((b) => b.id === selectedBatchId) || null;
 
-  // Create batch – send to backend and keep UI in sync
   const createBatch = async (newBatch) => {
     try {
       setApiError("");
@@ -82,23 +80,19 @@ function App() {
         body: JSON.stringify(newBatch),
       });
 
-      if (!res.ok) {
-        throw new Error(`Create failed with ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`Create failed with ${res.status}`);
 
       const saved = await res.json();
       setBatches((prev) => [...prev, saved]);
       setSelectedBatchId(saved.id);
     } catch (err) {
       console.error("Error creating batch:", err);
-      setApiError("Failed to create batch on backend.");
-      // still keep it in local state so demo continues
+      setApiError("Failed to create batch on backend. Using local state only.");
       setBatches((prev) => [...prev, newBatch]);
       setSelectedBatchId(newBatch.id);
     }
   };
 
-  // Update batch – send to backend and keep UI in sync
   const updateBatch = async (updatedBatch) => {
     try {
       setApiError("");
@@ -111,9 +105,7 @@ function App() {
         }
       );
 
-      if (!res.ok) {
-        throw new Error(`Update failed with ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`Update failed with ${res.status}`);
 
       const saved = await res.json();
       setBatches((prev) =>
@@ -121,8 +113,7 @@ function App() {
       );
     } catch (err) {
       console.error("Error updating batch:", err);
-      setApiError("Failed to update batch on backend.");
-      // local fallback so UI doesn’t break
+      setApiError("Failed to update batch on backend. Using local state only.");
       setBatches((prev) =>
         prev.map((b) => (b.id === updatedBatch.id ? updatedBatch : b))
       );
@@ -158,7 +149,7 @@ function App() {
     }
   };
 
-  // If user not logged in → show only auth screens
+  // If not logged in → show auth only
   if (!currentUser) {
     return (
       <div className="app">
@@ -171,12 +162,11 @@ function App() {
     );
   }
 
-  // Logged-in view
+  // Logged in view
   return (
     <div className="app">
       <TopNav activeRole={activeRole || role} />
-
-      {/* Tabs are locked to user role, cannot switch to other roles */}
+      {/* RoleTabs already locked by userRole inside */}
       <RoleTabs
         activeRole={activeRole || role}
         setActiveRole={setActiveRole}
