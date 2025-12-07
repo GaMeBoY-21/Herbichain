@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 import TopNav from "./components/TopNav.jsx";
 import RoleTabs from "./components/RoleTabs.jsx";
@@ -15,40 +15,34 @@ import LoginPage from "./pages/LoginPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
 
 import { useAuth } from "./AuthContext.jsx";
+import { API_BASE } from "./config.js";          // uses VITE_API_BASE in prod
 import { batchesMock } from "./data/mockData.js";
 
-// 🔑 IMPORTANT: use env var for API base
-// In local dev: VITE_API_BASE will usually be http://localhost:4000
-// In production (Vercel), set VITE_API_BASE to your Render backend URL
-const API_BASE =
-  import.meta.env.VITE_API_BASE || "http://localhost:4000";
-
 function App() {
-  const { currentUser, role } = useAuth();
+  // -------- Auth state (Firebase) --------
+  const { currentUser, role } = useAuth();       // role stored in Firestore
+  const [authView, setAuthView] = useState("login"); // "login" | "signup"
 
-  // "login" | "signup"
-  const [authView, setAuthView] = useState("login");
-
-  const [activeRole, setActiveRole] = useState(null);
-
+  // -------- App state --------
+  const [activeRole, setActiveRole] = useState(null); // UI role (locked to user role)
   const [batches, setBatches] = useState([]);
   const [selectedBatchId, setSelectedBatchId] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [apiError, setApiError] = useState("");
+  const [apiMessage, setApiMessage] = useState("");    // success / warning message
 
-  // Whenever Firebase role changes, lock UI role to that
+  // When Firebase role changes, lock activeRole to that role
   useEffect(() => {
     if (role) {
       setActiveRole(role);
     }
   }, [role]);
 
-  // Load batches from backend on first load
+  // -------- Initial load: fetch batches from backend --------
   useEffect(() => {
     const loadBatches = async () => {
       try {
         setLoading(true);
-        setApiError("");
+        setApiMessage("");
 
         const res = await fetch(`${API_BASE}/api/batches`);
         if (!res.ok) {
@@ -57,18 +51,21 @@ function App() {
 
         const data = await res.json();
         if (!Array.isArray(data) || data.length === 0) {
-          // fallback to mock data if DB is empty
+          // If DB is empty, seed UI with mock data
           setBatches(batchesMock);
           setSelectedBatchId(batchesMock[0]?.id || null);
+          setApiMessage("No batches found in DB yet. Using demo batch locally.");
         } else {
           setBatches(data);
           setSelectedBatchId(data[0]?.id || null);
         }
       } catch (err) {
-        console.error("Error loading batches:", err);
-        setApiError("Could not connect to backend. Using demo data.");
+        console.error("Error loading batches from backend:", err);
         setBatches(batchesMock);
         setSelectedBatchId(batchesMock[0]?.id || null);
+        setApiMessage(
+          "Could not reach backend. Showing local demo data only."
+        );
       } finally {
         setLoading(false);
       }
@@ -77,38 +74,50 @@ function App() {
     loadBatches();
   }, []);
 
+  // Current selected batch object
   const selectedBatch =
     batches.find((b) => b.id === selectedBatchId) || null;
 
-  // Create batch → backend + ledger
+  // -------- Create batch (Farmer) --------
   const createBatch = async (newBatch) => {
+    // Optimistic local update so UI always feels responsive
+    setBatches((prev) => [...prev, newBatch]);
+    setSelectedBatchId(newBatch.id);
+
     try {
-      setApiError("");
+      setApiMessage("");
       const res = await fetch(`${API_BASE}/api/batches`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newBatch),
       });
 
-      if (!res.ok) throw new Error(`Create failed with ${res.status}`);
+      if (!res.ok) {
+        throw new Error(`Create failed with status ${res.status}`);
+      }
 
       const saved = await res.json();
-      setBatches((prev) => [...prev, saved]);
-      setSelectedBatchId(saved.id);
-    } catch (err) {
-      console.error("Error creating batch:", err);
-      setApiError(
-        "Failed to create batch on backend. Using local state only."
+      // Sync with server version (in case it modifies anything)
+      setBatches((prev) =>
+        prev.map((b) => (b.id === saved.id ? saved : b))
       );
-      setBatches((prev) => [...prev, newBatch]);
-      setSelectedBatchId(newBatch.id);
+    } catch (err) {
+      console.error("Error creating batch on backend:", err);
+      setApiMessage(
+        "Failed to save new batch on backend. Using local state only."
+      );
     }
   };
 
-  // Update batch → backend + ledger
+  // -------- Update batch (Lab / Manufacturer / Distributor / Regulator) --------
   const updateBatch = async (updatedBatch) => {
+    // Optimistic local update
+    setBatches((prev) =>
+      prev.map((b) => (b.id === updatedBatch.id ? updatedBatch : b))
+    );
+
     try {
-      setApiError("");
+      setApiMessage("");
       const res = await fetch(
         `${API_BASE}/api/batches/${encodeURIComponent(updatedBatch.id)}`,
         {
@@ -118,23 +127,23 @@ function App() {
         }
       );
 
-      if (!res.ok) throw new Error(`Update failed with ${res.status}`);
+      if (!res.ok) {
+        throw new Error(`Update failed with status ${res.status}`);
+      }
 
       const saved = await res.json();
       setBatches((prev) =>
         prev.map((b) => (b.id === saved.id ? saved : b))
       );
     } catch (err) {
-      console.error("Error updating batch:", err);
-      setApiError(
+      console.error("Error updating batch on backend:", err);
+      setApiMessage(
         "Failed to update batch on backend. Using local state only."
-      );
-      setBatches((prev) =>
-        prev.map((b) => (b.id === updatedBatch.id ? updatedBatch : b))
       );
     }
   };
 
+  // -------- Which page to show for the logged-in role --------
   const renderPage = () => {
     const commonProps = {
       batches,
@@ -164,10 +173,10 @@ function App() {
     }
   };
 
-  // 🔒 If not logged in → show only auth screens
+  // -------- Not logged in: show auth screens only --------
   if (!currentUser) {
     return (
-      <div className="app">
+      <div className="app auth-background">
         {authView === "login" ? (
           <LoginPage onSwitchToSignup={() => setAuthView("signup")} />
         ) : (
@@ -177,21 +186,26 @@ function App() {
     );
   }
 
-  // ✅ Logged-in view
+  // -------- Logged-in main UI --------
+  const effectiveRole = activeRole || role;
+
   return (
     <div className="app">
-      <TopNav activeRole={activeRole || role} />
-      {/* Tabs visible but disabled for other roles inside RoleTabs */}
+      <TopNav activeRole={effectiveRole} />
+
+      {/* RoleTabs will show only the user’s role (farmer / lab / etc) */}
       <RoleTabs
-        activeRole={activeRole || role}
+        activeRole={effectiveRole}
         setActiveRole={setActiveRole}
         userRole={role}
       />
 
-      {apiError && <p className="error-banner">{apiError}</p>}
+      {apiMessage && <p className="info-banner">{apiMessage}</p>}
 
       {loading ? (
-        <p className="muted">Loading batches...</p>
+        <p className="muted" style={{ padding: "12px 4px" }}>
+          Loading batches…
+        </p>
       ) : (
         <main className="main-content">{renderPage()}</main>
       )}
