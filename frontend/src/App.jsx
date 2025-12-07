@@ -16,24 +16,34 @@ import SignupPage from "./pages/SignupPage.jsx";
 
 import { useAuth } from "./AuthContext.jsx";
 import { batchesMock } from "./data/mockData.js";
-import { API_BASE } from "./config.js"; // 👈 NEW
+
+// 🔑 IMPORTANT: use env var for API base
+// In local dev: VITE_API_BASE will usually be http://localhost:4000
+// In production (Vercel), set VITE_API_BASE to your Render backend URL
+const API_BASE =
+  import.meta.env.VITE_API_BASE || "http://localhost:4000";
 
 function App() {
   const { currentUser, role } = useAuth();
+
+  // "login" | "signup"
   const [authView, setAuthView] = useState("login");
 
   const [activeRole, setActiveRole] = useState(null);
+
   const [batches, setBatches] = useState([]);
   const [selectedBatchId, setSelectedBatchId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
 
-  // lock activeRole to Firebase role
+  // Whenever Firebase role changes, lock UI role to that
   useEffect(() => {
-    if (role) setActiveRole(role);
+    if (role) {
+      setActiveRole(role);
+    }
   }, [role]);
 
-  // fetch batches on load
+  // Load batches from backend on first load
   useEffect(() => {
     const loadBatches = async () => {
       try {
@@ -41,10 +51,13 @@ function App() {
         setApiError("");
 
         const res = await fetch(`${API_BASE}/api/batches`);
-        if (!res.ok) throw new Error(`Backend responded with ${res.status}`);
+        if (!res.ok) {
+          throw new Error(`Backend responded with ${res.status}`);
+        }
 
         const data = await res.json();
         if (!Array.isArray(data) || data.length === 0) {
+          // fallback to mock data if DB is empty
           setBatches(batchesMock);
           setSelectedBatchId(batchesMock[0]?.id || null);
         } else {
@@ -67,6 +80,7 @@ function App() {
   const selectedBatch =
     batches.find((b) => b.id === selectedBatchId) || null;
 
+  // Create batch → backend + ledger
   const createBatch = async (newBatch) => {
     try {
       setApiError("");
@@ -83,12 +97,15 @@ function App() {
       setSelectedBatchId(saved.id);
     } catch (err) {
       console.error("Error creating batch:", err);
-      setApiError("Failed to create batch on backend. Using local state only.");
+      setApiError(
+        "Failed to create batch on backend. Using local state only."
+      );
       setBatches((prev) => [...prev, newBatch]);
       setSelectedBatchId(newBatch.id);
     }
   };
 
+  // Update batch → backend + ledger
   const updateBatch = async (updatedBatch) => {
     try {
       setApiError("");
@@ -109,7 +126,9 @@ function App() {
       );
     } catch (err) {
       console.error("Error updating batch:", err);
-      setApiError("Failed to update batch on backend. Using local state only.");
+      setApiError(
+        "Failed to update batch on backend. Using local state only."
+      );
       setBatches((prev) =>
         prev.map((b) => (b.id === updatedBatch.id ? updatedBatch : b))
       );
@@ -139,12 +158,13 @@ function App() {
       case "regulator":
         return <RegulatorPage {...commonProps} />;
       case "consumer":
-        return <ConsumerPage batches={batches} />; // Consumer doesn't need selectedBatch props
+        return <ConsumerPage {...commonProps} />;
       default:
         return <FarmerPage {...commonProps} />;
     }
   };
 
+  // 🔒 If not logged in → show only auth screens
   if (!currentUser) {
     return (
       <div className="app">
@@ -157,10 +177,11 @@ function App() {
     );
   }
 
+  // ✅ Logged-in view
   return (
     <div className="app">
       <TopNav activeRole={activeRole || role} />
-      {/* Tabs still visible but only current role enabled inside RoleTabs */}
+      {/* Tabs visible but disabled for other roles inside RoleTabs */}
       <RoleTabs
         activeRole={activeRole || role}
         setActiveRole={setActiveRole}
