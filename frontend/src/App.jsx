@@ -16,28 +16,24 @@ import SignupPage from "./pages/SignupPage.jsx";
 
 import { useAuth } from "./AuthContext.jsx";
 import { batchesMock } from "./data/mockData.js";
-
-// ⬇️ IMPORTANT: use env var, fallback to localhost for dev
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
+import { API_BASE } from "./config.js"; // 👈 NEW
 
 function App() {
   const { currentUser, role } = useAuth();
   const [authView, setAuthView] = useState("login");
 
   const [activeRole, setActiveRole] = useState(null);
-
   const [batches, setBatches] = useState([]);
   const [selectedBatchId, setSelectedBatchId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
 
+  // lock activeRole to Firebase role
   useEffect(() => {
-    if (role) {
-      setActiveRole(role);
-    }
+    if (role) setActiveRole(role);
   }, [role]);
 
+  // fetch batches on load
   useEffect(() => {
     const loadBatches = async () => {
       try {
@@ -143,13 +139,12 @@ function App() {
       case "regulator":
         return <RegulatorPage {...commonProps} />;
       case "consumer":
-        return <ConsumerPage {...commonProps} />;
+        return <ConsumerPage batches={batches} />; // Consumer doesn't need selectedBatch props
       default:
         return <FarmerPage {...commonProps} />;
     }
   };
 
-  // If not logged in → show auth only
   if (!currentUser) {
     return (
       <div className="app">
@@ -162,11 +157,10 @@ function App() {
     );
   }
 
-  // Logged in view
   return (
     <div className="app">
       <TopNav activeRole={activeRole || role} />
-      {/* RoleTabs already locked by userRole inside */}
+      {/* Tabs still visible but only current role enabled inside RoleTabs */}
       <RoleTabs
         activeRole={activeRole || role}
         setActiveRole={setActiveRole}
