@@ -1,4 +1,7 @@
 // src/config.js
-// For local dev: falls back to localhost:4000
+
+// Base URL for your backend API.
+// In production, Vercel will inject VITE_API_BASE from environment variables.
+// Locally it will fall back to http://localhost:4000.
 export const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
+  import.meta.env.VITE_API_BASE || "http://localhost:4000";
