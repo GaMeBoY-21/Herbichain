@@ -15,7 +15,7 @@ function ManufacturerPage({
     "HerbalCare Pvt Ltd"
   );
   const [productInfo, setProductInfo] = useState(
-    "Converted to Ashwagandha capsules – pack of 60."
+    "Converted to capsules – pack of 60."
   );
   const [showQR, setShowQR] = useState(false);
   const [isCapturingLoc, setIsCapturingLoc] = useState(false);
@@ -52,13 +52,17 @@ function ManufacturerPage({
 
     const locName =
       locationInfo.locationName ||
-      selectedBatch.locationName ||
-      selectedBatch.location ||
       (locationInfo.coords
         ? `${locationInfo.coords.lat.toFixed(
             4
           )}, ${locationInfo.coords.lng.toFixed(4)}`
-        : "Unknown location");
+        : selectedBatch.location || "Unknown location");
+
+    // ✅ Generate QR value at manufacturer stage (once)
+    const qrValue =
+      selectedBatch.qrCodeValue && selectedBatch.qrCodeValue.trim() !== ""
+        ? selectedBatch.qrCodeValue
+        : selectedBatch.id; // for demo, QR encodes the batch ID
 
     const newEvent = {
       type: "MANUFACTURING",
@@ -76,7 +80,8 @@ function ManufacturerPage({
       location: locName,
       locationName: locName,
       geo: locationInfo.coords || selectedBatch.geo || null,
-      events: [...selectedBatch.events, newEvent],
+      qrCodeValue: qrValue,
+      events: [...(selectedBatch.events || []), newEvent],
     };
 
     updateBatch(updated);
@@ -87,12 +92,25 @@ function ManufacturerPage({
     <div className="main-grid">
       <div>
         <div className="card">
-          <h3>Manufacturer – Process Batch</h3>
+          <h3>Manufacturer – Process Batch &amp; Generate QR</h3>
           {selectedBatch ? (
             <>
               <p>
                 Selected Batch: <strong>{selectedBatch.id}</strong>
               </p>
+
+              {selectedBatch.qrCodeValue ? (
+                <p className="muted small">
+                  Existing QR Value:{" "}
+                  <code>{selectedBatch.qrCodeValue}</code>
+                </p>
+              ) : (
+                <p className="muted small">
+                  QR not generated yet – it will be created when you record this
+                  manufacturing step.
+                </p>
+              )}
+
               <form className="form" onSubmit={handleManufacture}>
                 <label>
                   Manufacturer Name
@@ -126,7 +144,7 @@ function ManufacturerPage({
                 </div>
 
                 <button className="primary-btn" type="submit">
-                  Record Manufacturing Step
+                  Record Manufacturing &amp; Generate QR
                 </button>
               </form>
             </>

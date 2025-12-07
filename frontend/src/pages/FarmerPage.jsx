@@ -68,12 +68,12 @@ function FarmerPage({
       herbName: form.herbName,
       species: form.species,
       farmerName: form.farmerName,
-      // 🔑 top-level location fields used by BatchDetails
       location: locName,
       locationName: locName,
       geo: locationInfo.coords, // { lat, lng } or null
       status: "Harvested",
-      qrCodeValue: id,
+      // 🔴 QR is NOT generated at farmer stage
+      qrCodeValue: null,
       events: [
         {
           type: "HARVEST",
