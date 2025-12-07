@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import BatchDetails from "../components/BatchDetails.jsx";
 import QRModal from "../components/QRModal.jsx";
-import { API_BASE } from "../config.js";
+import { API_BASE } from "../config.js"; // <- one level up from pages/
 
 function ConsumerPage({ batches }) {
   const [input, setInput] = useState("");
@@ -13,16 +13,14 @@ function ConsumerPage({ batches }) {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState("");
 
-  // -----------------------------------------------------
-  // Search batch by ID or QR value
-  // -----------------------------------------------------
   const handleSearch = (e) => {
     e.preventDefault();
 
+    const lowered = input.trim().toLowerCase();
     const batch = batches.find(
       (b) =>
-        b.id?.toLowerCase() === input.toLowerCase() ||
-        b.qrCodeValue?.toLowerCase() === input.toLowerCase()
+        b.id?.toLowerCase() === lowered ||
+        b.qrCodeValue?.toLowerCase() === lowered
     );
 
     setFoundBatch(batch || null);
@@ -30,9 +28,6 @@ function ConsumerPage({ batches }) {
     setAiError("");
   };
 
-  // -----------------------------------------------------
-  // Ask OpenAI to explain the timeline of this batch
-  // -----------------------------------------------------
   const handleAskAI = async () => {
     if (!foundBatch) return;
 
@@ -55,9 +50,7 @@ function ConsumerPage({ batches }) {
       setAiSummary(data.summary || "No AI summary returned.");
     } catch (err) {
       console.error("Error generating AI timeline:", err);
-      setAiError(
-        "AI could not generate explanation. Please try again."
-      );
+      setAiError("AI could not generate explanation. Please try again.");
     } finally {
       setAiLoading(false);
     }
@@ -74,7 +67,6 @@ function ConsumerPage({ batches }) {
           For the demo, enter the batch ID manually.
         </p>
 
-        {/* Search Form */}
         <form className="form" onSubmit={handleSearch}>
           <label>
             Batch ID / QR Value
@@ -96,7 +88,6 @@ function ConsumerPage({ batches }) {
           </p>
         )}
 
-        {/* AI ACTION BUTTON */}
         {foundBatch && (
           <div className="ai-actions" style={{ marginTop: "1rem" }}>
             <button
@@ -105,16 +96,13 @@ function ConsumerPage({ batches }) {
               onClick={handleAskAI}
               disabled={aiLoading}
             >
-              {aiLoading
-                ? "Asking AI..."
-                : "Ask AI to explain the timeline"}
+              {aiLoading ? "Asking AI..." : "Ask AI to explain the timeline"}
             </button>
 
             {aiError && <p className="auth-error">{aiError}</p>}
           </div>
         )}
 
-        {/* AI SUMMARY RESULT */}
         {aiSummary && (
           <div className="card ai-summary-card" style={{ marginTop: "1rem" }}>
             <h4>AI Explanation</h4>
@@ -124,10 +112,7 @@ function ConsumerPage({ batches }) {
       </div>
 
       {/* RIGHT SIDE – Batch Details */}
-      <BatchDetails
-        batch={foundBatch}
-        onShowQR={() => setShowQR(true)}
-      />
+      <BatchDetails batch={foundBatch} onShowQR={() => setShowQR(true)} />
 
       {showQR && (
         <QRModal batch={foundBatch} onClose={() => setShowQR(false)} />
